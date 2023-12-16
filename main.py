@@ -9,3 +9,21 @@
 #   料金
 #   乗換回数
 #   徒歩→電車→徒歩　などの結果の格納方法　→　トータルの値がわかればOK
+
+
+import google_map
+import config
+
+point_x = '東京都新宿区新宿３丁目３８−１'
+
+for address in config.addresses:
+
+	print(f'{point_x} から {address[0]} までの所要時間、交通費は')
+	print(google_map.get_route_info(address[1], point_x))
+	# print(f'{google_map.get_route_info(address[1], point_x).time} です')
+	# print(f'{google_map.get_route_info(address[1], point_x).time} です')
+# google_map.get_route_info()
+# print(config.addresses[0])
+
+# 仮データ
+# print(google_map.get_route_info(point_a, point_x))
