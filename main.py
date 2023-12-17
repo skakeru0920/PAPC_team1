@@ -17,9 +17,9 @@ import config
 point_x = '東京都新宿区新宿３丁目３８−１'
 
 for address in config.addresses:
-
-	print(f'{point_x} から {address[0]} までの所要時間、交通費は')
-	print(google_map.get_route_info(address[1], point_x))
+	info = google_map.get_route_info(address[1], point_x)
+	print(f'{point_x} から {address[0]} までの所要時間は {info["time"]} 、交通費は {info["fare"]} です。')
+	print()
 	# print(f'{google_map.get_route_info(address[1], point_x).time} です')
 	# print(f'{google_map.get_route_info(address[1], point_x).time} です')
 # google_map.get_route_info()

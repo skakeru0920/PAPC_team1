@@ -1,6 +1,8 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
+from selenium.common.exceptions import NoSuchElementException
+# import time
 
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -45,8 +47,14 @@ def get_route_info(start, dist):
 
 	wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, '#section-directions-trip-0 > div.MespJc > div > div.XdKEzd > div')))
 
-	time_ele = driver.find_element(By.CSS_SELECTOR, '#section-directions-trip-0 > div.MespJc > div > div.XdKEzd > div')
-	fare_ele = driver.find_element(By.CSS_SELECTOR, '#section-directions-trip-0 > div.MespJc > div > div.ue5qRc > span:nth-child(2)')
-	route_info = {"time": time_ele.text, "fare": fare_ele.text}
+	time_text = driver.find_element(By.CSS_SELECTOR, '#section-directions-trip-0 > div.MespJc > div > div.XdKEzd > div').text
+	
+	try:
+		fare_text = driver.find_element(By.CSS_SELECTOR, '#section-directions-trip-0 > div.MespJc > div > div.ue5qRc > span:nth-child(2)').text
+
+	except NoSuchElementException:
+		fare_text = "0円"
+
+	route_info = {"time": time_text, "fare": fare_text}
 	driver.quit()
 	return route_info
