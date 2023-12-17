@@ -12,6 +12,7 @@ import get_address
 
 base_url = input("SUUMOの検索結果URLを入力してください: ")
 
+print()
 #物件情報が保存される配列 (駅名, 駅徒歩)
 property_info = get_address.get_address(base_url)
 
@@ -25,7 +26,7 @@ for i in range(len(property_info[0])):
 	#駅徒歩時間
 	walk_time = property_info[2][i]
 
-	print(f'# {point_x} (最寄り駅: {station}から徒歩{walk_time}分) までの経路情報 ↓')
+	print(f'\033[92m\033[1m# {point_x} (最寄り駅: {station}から徒歩{walk_time}分) までの経路情報 ↓\033[0m')
 	for address in config.addresses:
 		info = google_map.get_route_info(address[1], station)
 		sum_time = walk_time + int(re.sub(r"\D", "", info["time"]))
