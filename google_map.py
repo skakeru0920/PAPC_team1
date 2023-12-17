@@ -2,8 +2,6 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import NoSuchElementException
-# import time
-
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
@@ -44,14 +42,12 @@ def get_route_info(start, dist):
 	submit_button.click()
 
 	# ルート情報
-
 	wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, '#section-directions-trip-0 > div.MespJc > div > div.XdKEzd > div')))
-
 	time_text = driver.find_element(By.CSS_SELECTOR, '#section-directions-trip-0 > div.MespJc > div > div.XdKEzd > div').text
 	
+	# 徒歩移動の場合(交通費が表示されない)
 	try:
 		fare_text = driver.find_element(By.CSS_SELECTOR, '#section-directions-trip-0 > div.MespJc > div > div.ue5qRc > span:nth-child(2)').text
-
 	except NoSuchElementException:
 		fare_text = "0円"
 
