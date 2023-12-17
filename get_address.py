@@ -1,71 +1,133 @@
-# sumoから住所情報を取得してくる
-# https://myfrankblog.com/scraping-suumo-website/
+# suumo上のURLから物件情報を取得してくる
 
 from retry import retry
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd 
+import csv
+import re
 
-# 東京23区
-base_url = "https://suumo.jp/jj/chintai/ichiran/FR301FC001/?ar=030&bs=040&ta=13&sc=13101&sc=13102&sc=13103&sc=13104&sc=13105&sc=13113&sc=13106&sc=13107&sc=13108&sc=13118&sc=13121&sc=13122&sc=13123&sc=13109&sc=13110&sc=13111&sc=13112&sc=13114&sc=13115&sc=13120&sc=13116&sc=13117&sc=13119&cb=0.0&ct=9999999&mb=0&mt=9999999&et=9999999&cn=9999999&shkr1=03&shkr2=03&shkr3=03&shkr4=03&sngz=&po1=25&pc=50&page={}"
+# https://suumo.jp/chintai/tokyo/city/
+# このサイトから住みたい物件の条件を指定して検索したURLを base_url に入力する
+# base_url = input("SUUMOの検索結果URLを入力してください: ")
 
-@retry(tries=3, delay=10, backoff=2)
-def get_html(url):
-    r = requests.get(url)
-    soup = BeautifulSoup(r.content, "html.parser")
-    return soup
+def get_address(base_url):
 
-all_data = []
-max_page = 1697
+	@retry(tries=3, delay=10, backoff=2)
+	def get_html(url):
+		r = requests.get(url)
+		soup = BeautifulSoup(r.content, "html.parser")
+		return soup
 
-for page in range(1, max_page+1):
-    # define url 
-    url = base_url.format(page)
-    
-    # get html
-    soup = get_html(url)
-    
-    # extract all items
-    items = soup.findAll("div", {"class": "cassetteitem"})
-    print("page", page, "items", len(items))
-    
-    # process each item
-    for item in items:
-        stations = item.findAll("div", {"class": "cassetteitem_detail-text"})
-        
-        # process each station 
-        for station in stations:
-            # define variable 
-            base_data = {}
+	all_data = []
+	max_page = 1
 
-            # collect base information    
-            base_data["名称"] = item.find("div", {"class": "cassetteitem_content-title"}).getText().strip()
-            base_data["カテゴリー"] = item.find("div", {"class": "cassetteitem_content-label"}).getText().strip()
-            base_data["アドレス"] = item.find("li", {"class": "cassetteitem_detail-col1"}).getText().strip()
-            base_data["アクセス"] = station.getText().strip()
-            base_data["築年数"] = item.find("li", {"class": "cassetteitem_detail-col3"}).findAll("div")[0].getText().strip()
-            base_data["構造"] = item.find("li", {"class": "cassetteitem_detail-col3"}).findAll("div")[1].getText().strip()
-            
-            # process for each room
-            tbodys = item.find("table", {"class": "cassetteitem_other"}).findAll("tbody")
-            
-            for tbody in tbodys:
-                data = base_data.copy()
+	# ここで検索する物件数を設定できます
+	max_item = 3
 
-                data["階数"] = tbody.findAll("td")[2].getText().strip()
+	for page in range(1, max_page+1):
+		# URLを定義 
+		url = base_url.format(page)
+		
+		# HTMLを取得
+		soup = get_html(url)
+		
+		# すべての項目を抽出する
+		items = soup.findAll("div", {"class": "cassetteitem"})
+		print("page", page, "items", len(items))
+		
+		# 異なる建物の情報
+		for index, item in enumerate(items):
+			if index < max_item:
+				stations = item.findAll("div", {"class": "cassetteitem_detail-text"})
+				
+				# 異なる最寄駅の情報
+				for index, station in enumerate(stations):
+					if index % 3 == 0:
+						base_data = {}
 
-                data["家賃"] = tbody.findAll("td")[3].findAll("li")[0].getText().strip()
-                data["管理費"] = tbody.findAll("td")[3].findAll("li")[1].getText().strip()
+						# ベースの情報
+						base_data["名称"] = item.find("div", {"class": "cassetteitem_content-title"}).getText().strip()
+						base_data["アドレス"] = item.find("li", {"class": "cassetteitem_detail-col1"}).getText().strip()
+						base_data["アクセス"] = station.getText().strip()
+						# base_data["カテゴリー"] = item.find("div", {"class": "cassetteitem_content-label"}).getText().strip()
+						# base_data["築年数"] = item.find("li", {"class": "cassetteitem_detail-col3"}).findAll("div")[0].getText().strip()
+						# base_data["構造"] = item.find("li", {"class": "cassetteitem_detail-col3"}).findAll("div")[1].getText().strip()
+						
+						# 同じ建物の異なる部屋の情報（今回のシステムとしては建物の場所が分かれば良いから部屋の違いだけなら省略）
+						tbodys = item.find("table", {"class": "cassetteitem_other"}).findAll("tbody")
+						
+						for index, tbody in enumerate(tbodys):
+							if index == 0:
+								data = base_data.copy()
 
-                data["敷金"] = tbody.findAll("td")[4].findAll("li")[0].getText().strip()
-                data["礼金"] = tbody.findAll("td")[4].findAll("li")[1].getText().strip()
+								data["階数"] = tbody.findAll("td")[2].getText().strip()
+								data["家賃"] = tbody.findAll("td")[3].findAll("li")[0].getText().strip()
+								# data["管理費"] = tbody.findAll("td")[3].findAll("li")[1].getText().strip()
+								# data["敷金"] = tbody.findAll("td")[4].findAll("li")[0].getText().strip()
+								# data["礼金"] = tbody.findAll("td")[4].findAll("li")[1].getText().strip()
+								# data["間取り"] = tbody.findAll("td")[5].findAll("li")[0].getText().strip()
+								# data["面積"] = tbody.findAll("td")[5].findAll("li")[1].getText().strip()
+								
+								data["URL"] = "https://suumo.jp" + tbody.findAll("td")[8].find("a").get("href")
+								
+								all_data.append(data)
 
-                data["間取り"] = tbody.findAll("td")[5].findAll("li")[0].getText().strip()
-                data["面積"] = tbody.findAll("td")[5].findAll("li")[1].getText().strip()
-                
-                data["URL"] = "https://suumo.jp" + tbody.findAll("td")[8].find("a").get("href")
-                
-                all_data.append(data)    
+	# データフレームに変換
+	df = pd.DataFrame(all_data)
 
-# convert to dataframe
-df = pd.DataFrame(all_data)
+	# CSVとして出力
+	df.to_csv("property_information.csv")
+
+	# 各列の値を格納するための配列
+	names = []
+	addresses = []
+	accesses = []
+	floors = []
+	rents = []
+	urls = []
+	stations = []
+	walk_times = []
+
+	# CSVファイルを開いてデータを読み込む
+	with open("property_information.csv", mode='r', newline='', encoding='utf-8') as file:
+		reader = csv.reader(file)
+
+		# ヘッダー行をスキップ
+		next(reader)
+
+		# 各行に対して処理を行う
+		for row in reader:
+			name = row[1].replace('　', ' ')
+			names.append(name)     # 名称
+			addresses.append(row[2]) # アドレス
+			accesses.append(row[3])  # アクセス
+			floors.append(row[4])    # 階数
+			rents.append(row[5])     # 家賃
+			urls.append(row[6])      # URL
+
+	# 最寄り駅と最寄りまでの歩行時間の結果を格納するための配列
+	for text in accesses:
+		# "駅"までの文字列を取得
+		station_name = text.split("駅")[0] + "駅"
+		stations.append(station_name)
+
+		# "歩"と"分"の間の整数を抽出
+		walk_minutes = re.search(r'歩(\d+)分', text)
+		walk_minutes = int(walk_minutes.group(1)) if walk_minutes else None
+		walk_times.append(walk_minutes)
+
+	#物件情報を保存する配列(物件名, 駅名,　駅徒歩時間)
+	property_info = [names, stations, walk_times]
+
+	# 結果を表示（テスト用）
+	# print("名称:", names)
+	# print("アドレス:", addresses)
+	# print("アクセス:", accesses)
+	# print("階数:", floors)
+	# print("家賃:", rents)
+	# print("URL:", urls)
+	# print("stations:", stations)
+	# print("walk_times:", walk_times)
+
+	return(property_info)
