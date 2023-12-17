@@ -25,9 +25,9 @@ for i in range(len(property_info[0])):
 	#駅徒歩時間
 	walk_time = property_info[2][i]
 
-	print(f'# {point_x} の情報について（最寄り駅:{station}駅から徒歩{walk_time}分) ↓')
+	print(f'# {point_x} (最寄り駅: {station}から徒歩{walk_time}分) までの経路情報 ↓')
 	for address in config.addresses:
-		info = google_map.get_route_info(address[1], point_x)
+		info = google_map.get_route_info(address[1], station)
 		sum_time = walk_time + int(re.sub(r"\D", "", info["time"]))
-		print(f'  -{address[0]} までの所要時間は {sum_time} 分、交通費は {info["fare"]} です。')
+		print(f'  - {address[0]} までの所要時間は {sum_time} 分、交通費は {info["fare"]} です。')
 	print("\n")

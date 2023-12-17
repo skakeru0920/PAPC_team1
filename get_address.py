@@ -34,7 +34,7 @@ def get_address(base_url):
 		
 		# すべての項目を抽出する
 		items = soup.findAll("div", {"class": "cassetteitem"})
-		print("page", page, "items", len(items))
+		# print("page", page, "items", len(items))
 		
 		# 異なる建物の情報
 		for index, item in enumerate(items):
